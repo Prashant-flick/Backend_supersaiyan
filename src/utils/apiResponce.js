@@ -1,12 +1,12 @@
 class apiResponce{
     constructor(
-        statusCode,
-        message = "Success", 
+        statusCode, 
         data,
+        message = "success",
     ){
         this.statusCode = statusCode;
-        this.message = message;
         this.data = data;
+        this.message = message;
         this.success = statusCode;
     }
 }

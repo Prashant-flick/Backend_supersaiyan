@@ -34,6 +34,8 @@ const registerUser = asyncHandler(async (req, res) => {
     // console.log("req body: ",req.body);
     // console.log("req: ",req);
     // console.log("res: ",res);
+    console.log(req.body);
+    console.log(req.files);
 
     const {fullName, email, username, password} = req.body
 
@@ -98,8 +100,8 @@ const registerUser = asyncHandler(async (req, res) => {
     return res.status(201).json(
         new apiResponce(
             200,
-            "user registered Succesfully" ,
             createdUser,
+            "user registered Succesfully" ,
         )
     )
 
@@ -182,10 +184,6 @@ const logoutUser = asyncHandler(async (req, res) => {
         throw new apiError(404, "user not found")
     }
 
-    // req.user = null;
-
-    // console.log("logout user: ", user);
-
     const options = {
         httpOnly: true,
         secure: true,
@@ -198,7 +196,7 @@ const logoutUser = asyncHandler(async (req, res) => {
     .json(
         new apiResponce(
             200,
-            {},
+            user,
             "user logged out successfully"
         )
     )
@@ -442,15 +440,20 @@ const updateCoverImageDetails = asyncHandler( async(req, res) => {
 
 const getUserChannelProfile = asyncHandler( async(req, res) => {
     const {username} = req.params;
+    const {id} = req.query;
 
-    if(!username){
-        throw new apiError(400, "user not found");
+    if(!username && !id){
+        throw new apiError(400, "username or id required");
     }
 
     const channel = await User.aggregate([
         {
             $match:{
-                username : username?.toLowerCase,
+                $or: [
+                    (username!="null" && !id) ? {username : username} : {username: ""},
+                    (id && username=="null") ? {_id: new mongoose.Types.ObjectId(id)} : {_id: "" },
+                    (id && username) ? {username: username} : {username: ""}
+                ]
             }
         },
         {
@@ -474,11 +477,9 @@ const getUserChannelProfile = asyncHandler( async(req, res) => {
                 subscribersCount : {
                     $size: "$subscribers",
                 },
-                // check1: "$subscribers",
                 SubscribedToCount: {
                     $size: "$subscribedTo",
                 },
-                // check: "$subscribedTo",
                 isSubscribed: {
                     $cond: {
                         if: {$in: [req.user?._id, "$subscribers"]},
@@ -503,11 +504,11 @@ const getUserChannelProfile = asyncHandler( async(req, res) => {
         }
     ])
 
-    if(!channel || channel.lenght<1){
-        throw apiError(404, "Channel does not exist");
-    }
+    console.log(channel);
 
-    // console.log(channel[0]);
+    if(!channel || channel.length<1){
+        throw new apiError(404, "Channel does not exist");
+    }
 
     return res.status(200)
     .json(
@@ -566,6 +567,25 @@ const getwatchHistory = asyncHandler( async(req, res) => {
     )
 })
 
+const  getUserbyId = asyncHandler( async(req, res) => {
+    const {id} = req.params;
+
+    if(!id){
+        throw new apiError(404, "userid is required")
+    }
+
+    const user = await  User.findById(id).select("-password");
+    
+    if(!user){
+        throw new apiError(404, "user not found")
+    }
+
+    return res.status(200)
+    .json(
+        new apiResponce(200, user, "user fetched successfully")
+    )
+})
+
 export {
     registerUser, 
     loginUser, 
@@ -579,5 +599,6 @@ export {
     getUserChannelProfile,
     getwatchHistory,
     deleteCurrentUser,
+    getUserbyId
 }
 

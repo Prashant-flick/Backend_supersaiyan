@@ -11,7 +11,8 @@ import {
     updateCoverImageDetails, 
     getUserChannelProfile, 
     getwatchHistory, 
-    deleteCurrentUser
+    deleteCurrentUser,
+    getUserbyId
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
@@ -46,6 +47,7 @@ router.route("/update-avatar").patch(verifyJWT,upload.single("avatar"), updateAv
 router.route("/update-coverImage").patch(verifyJWT, upload.single("coverImage"), updateCoverImageDetails)
 
 router.route("/c/:username").get(verifyJWT, getUserChannelProfile)
+router.route("/get-user-by-id/:id").get(verifyJWT, getUserbyId)
 router.route("/history").get(verifyJWT, getwatchHistory)
 
 

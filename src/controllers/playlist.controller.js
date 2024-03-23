@@ -68,9 +68,9 @@ const getUserPlaylists = asyncHandler( async(req, res)=> {
         }
     ])
 
-    if(!playlist || playlist.length === 0){
-        throw new apiError(404, "playlist not found create a playlist first")
-    }
+    // if(!playlist || playlist.length === 0){
+    //     throw new apiError(404, "playlist not found create a playlist first")
+    // }
 
     return res.status(200)
     .json(

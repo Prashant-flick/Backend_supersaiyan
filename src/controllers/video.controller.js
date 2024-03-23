@@ -8,24 +8,19 @@ import mongoose from 'mongoose'
 const getAllVideos = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, query, sortBy, userId } = req.query
 
-    if(!query && !sortBy && !userId){
-        throw new apiError(404, "some feilds are required");
-    }
-
-    // console.log(userId);
-
     const videos = await Video.aggregate([
         {
             $match: {
                 $or: [
                     userId ? { owner: new mongoose.Types.ObjectId(userId) } : { owner: ""},
                     query ? { title: query } : {title: ""},
-                    query ? { description: query } : {description: ""}
+                    query ? { description: query } : {description: ""},
+                    !userId && !query ? {} : {owner: ""}
                 ] 
             }
         },
         {
-            $sort: sortBy ? { [sortBy]: -1 } : { _id : -1}
+            $sort: sortBy ? { title : parseInt(sortBy) } : { _id : -1}
         },
         {
             $limit: limit
