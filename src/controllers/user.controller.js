@@ -567,7 +567,7 @@ const getwatchHistory = asyncHandler( async(req, res) => {
     )
 })
 
-const  getUserbyId = asyncHandler( async(req, res) => {
+const getUserbyId = asyncHandler( async(req, res) => {
     const {id} = req.params;
 
     if(!id){
