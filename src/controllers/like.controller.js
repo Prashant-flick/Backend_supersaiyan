@@ -35,18 +35,22 @@ const toggleVideoLike = asyncHandler(async(req, res)=>{
         if(!like){
             throw new apiError(404, "video like creation failed")
         }
+
+        return res.status(200)
+        .json(
+            new apiResponce(200, "liked", "video like toggled successfully")
+        )
     }else{
         like = await Like.findByIdAndDelete(like[0]._id)
 
         if(!like){
             throw new apiError(404, "video like deletion failed")
         }
+        return res.status(200)
+        .json(
+            new apiResponce(200, "unliked", "video like toggled successfully")
+        )
     }
-
-    return res.status(200)
-    .json(
-        new apiResponce(200, like, "video like toggled successfully")
-    )
 })
 
 const toggleCommentLike = asyncHandler(async(req, res)=>{
@@ -163,9 +167,44 @@ const getUserLikedVideos = asyncHandler(async(req, res)=>{
     )
 })
 
+const getVideoLikes = asyncHandler(async(req, res)=>{
+    const {videoId} = req.params;
+
+    if(!videoId){
+        throw new apiError(404, "videoId is required")
+    }
+
+    const likes = await Like.aggregate([
+        {
+            $match: {
+                $and: [
+                    {video : new mongoose.Types.ObjectId(videoId)},
+                    {likedBy : {$exists: true}}
+                ]
+            }
+        },
+        {
+            $project:{
+                likedBy: 1
+            }
+        }
+    ])
+
+    if(!likes && likes.length === 0){
+        throw new apiError(404, "no likes found")
+    }
+
+    return res.status(200)
+    .json(
+        new apiResponce(200, likes, "likes fetched successfully")
+    )
+})
+
 export{
     toggleVideoLike,
     toggleCommentLike,
     toggleTweetLike,
-    getUserLikedVideos
+    getUserLikedVideos,
+    getVideoLikes,
+
 }

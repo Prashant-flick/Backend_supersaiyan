@@ -4,7 +4,8 @@ import {User} from "../models/user.model.js";
 import { deleteFromCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js";
 import { apiResponce } from "../utils/apiResponce.js";
 import mongoose from "mongoose";
-
+import conf from "../conf/config.js"
+import jwt from "jsonwebtoken";
 
 const generateAccessAndRefreshToken = async(userId) => {
     try {
@@ -22,24 +23,9 @@ const generateAccessAndRefreshToken = async(userId) => {
 }
 
 const registerUser = asyncHandler(async (req, res) => {
-    // get user details from frontend
-    // check if user exists -- validation
-    // check if user already exists
-    // check for images -- check for avatar
-    // upload them in cloudinary -- check avatar
-    // create user object -- create entry on db
-    // remove password and refresh token feilds
-    // check for user creation
-    // return res
-    // console.log("req body: ",req.body);
-    // console.log("req: ",req);
-    // console.log("res: ",res);
-    console.log(req.body);
-    console.log(req.files);
 
     const {fullName, email, username, password} = req.body
 
-    //validation
     if(
         [fullName, email, username, password].some((feild) => 
             feild?.trim() === ""
@@ -53,7 +39,6 @@ const registerUser = asyncHandler(async (req, res) => {
     })
 
     if(existedUser){
-        // console.log(existedUser);
         throw new apiError(409, "User already exists");
     }
 
@@ -72,8 +57,6 @@ const registerUser = asyncHandler(async (req, res) => {
     if(!avatar){
         throw new apiError(400, "Avatar file is required");
     }
-    // console.log("avatar: ", avatar);
-    // if(coverImage)console.log("coverImage: ", coverImage);
 
     const user = await User.create({
         fullName,
@@ -84,14 +67,9 @@ const registerUser = asyncHandler(async (req, res) => {
         coverImage: coverImage?.url || "",
     })
 
-    // console.log(user);
-    // console.log(user._id);
-
     const createdUser = await User.findById(user._id).select(
         "-password -refreshToken"
     )
-
-    // console.log("created user",createdUser);
 
     if(!createdUser){
         throw new apiError(500, "User not created");
@@ -108,15 +86,8 @@ const registerUser = asyncHandler(async (req, res) => {
 });
 
 const loginUser = asyncHandler(async (req, res) => {
-    // get use data from req->body
-    // check if user exists
-    // check if password is correct
-    // generate access token and refresh token
-    // send cookies
 
     const {username, password, email} = req.body
-    // console.log(req.body);
-    // console.log(email);
 
     if( !username && !email){
         throw new apiError(400, "username or email is required");
@@ -125,8 +96,6 @@ const loginUser = asyncHandler(async (req, res) => {
     const user = await User.findOne({
         $or: [{username}, {email}]
     })
-
-    // console.log("login user: ", user);
  
     if(!user){
         throw new apiError(404, "user does not exists");
@@ -204,23 +173,27 @@ const logoutUser = asyncHandler(async (req, res) => {
 })
 
 const refreshAccessToken = asyncHandler(async (req,res) => {
-    const incomingRefreshToknen = req.cookies?.refreshToken || req.body.refreshToken;
+    console.log('here refreshTOken');
+    console.log(req);
+    const incomingRefreshToken = req.cookies?.refreshToken || req.body.refreshToken;
 
-    if(!incomingRefreshToknen){
+    if(!incomingRefreshToken){
         throw new apiError(401, "refresh token is required");
     }
 
     try {
-        const decodeToken = jwt.verify(incomingRefreshToknen, conf.refreshAccessToken);
+        console.log('here');
+
+        const decodeToken = jwt.verify(incomingRefreshToken, conf.refreshTokenSecret);
          
-        const user = User.findById(decodeToken?._id)
+        const user = await User.findById(decodeToken?._id)
     
         if(!user){
             throw new apiError(401, "user not found or token is invalid");
         }
     
-        if(incomingRefreshToknen !== user.refreshToken){
-            throw apiError(401, "invalid refresh token");
+        if(incomingRefreshToken !== user.refreshToken){
+            throw new apiError(401, "invalid refresh token");
         }
     
         const options = {
@@ -229,7 +202,6 @@ const refreshAccessToken = asyncHandler(async (req,res) => {
         }
     
         const {accessToken, newrefreshToken} = await generateAccessAndRefreshToken(user._id);
-    
     
         return res
         .status(200)
@@ -245,7 +217,7 @@ const refreshAccessToken = asyncHandler(async (req,res) => {
             )
         )
     } catch (error) {
-        throw apiError(401, error?.message || "invalid refresh token");
+        throw new apiError(401, error?.message || "invalid refresh token");
     }
 
 })
@@ -461,7 +433,7 @@ const getUserChannelProfile = asyncHandler( async(req, res) => {
                 from: "subscriptions",
                 localField: "_id",
                 foreignField: "subscriber",
-                as: "subscribers",
+                as: "subscribedTo",
             }
         },
         {
@@ -469,7 +441,7 @@ const getUserChannelProfile = asyncHandler( async(req, res) => {
                 from: "subscriptions",
                 localField: "_id",
                 foreignField: "channel",
-                as: "subscribedTo",
+                as: "subscribers",
             }
         },
         {
@@ -482,7 +454,7 @@ const getUserChannelProfile = asyncHandler( async(req, res) => {
                 },
                 isSubscribed: {
                     $cond: {
-                        if: {$in: [req.user?._id, "$subscribers"]},
+                        if: {$in: [new mongoose.Types.ObjectId(req.user?._id), "$subscribers.subscriber"]},
                         then: true,
                         else: false
                     }
@@ -599,6 +571,7 @@ export {
     getUserChannelProfile,
     getwatchHistory,
     deleteCurrentUser,
-    getUserbyId
+    getUserbyId,
+    generateAccessAndRefreshToken,
 }
 

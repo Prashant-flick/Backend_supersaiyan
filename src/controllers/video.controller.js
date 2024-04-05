@@ -82,8 +82,6 @@ const publishAVideo = asyncHandler(async (req, res) => {
 })
 
 const deleteVideo = asyncHandler(async (req, res) => {
-    // console.log(req.params);
-    // console.log(req.query);
     const {videoId} = req.params;
 
     if(!videoId){
@@ -104,9 +102,6 @@ const deleteVideo = asyncHandler(async (req, res) => {
     oldvideo = oldvideo.split('/')[7];
     oldvideo = oldvideo.split('.')[0];
 
-    // console.log(oldthumbnail);
-    // console.log(oldvideo);
-
     deleteFromCloudinary(oldthumbnail, "image");
     deleteFromCloudinary(oldvideo, "video");
 
@@ -123,9 +118,6 @@ const updateVideo = asyncHandler(async (req, res) => {
     }
 
     const {newTitle, newDescription} = req.body;
-    // console.log(newTitle, " ", newDescription);
-    // console.log(req.file);
-    // console.log(req.body);
 
     if(!newTitle && !newDescription){
         throw new apiError(404, "all feilds are required")
@@ -185,6 +177,9 @@ const getAVideobyId = asyncHandler( async (req, res) => {
     if(!video){
         throw new apiError(404, "video not found")
     }
+
+    video.views = video.views + 1;
+    await video.save({validateBeforeSave: false});
 
     return res.status(200)
     .json(

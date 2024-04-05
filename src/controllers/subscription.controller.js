@@ -35,6 +35,11 @@ const toggleSubscription = asyncHandler( async(req, res)=> {
         if(!channel){
             throw new apiError(500,"Failed to create new subscription")
         }
+
+        return res.status(200)
+        .json(
+            new apiResponce(200, 'subscribed', "subscription toggled succesfull")
+        )
     }else{
         channel = await Subscription.findByIdAndDelete(
             channel[0]?._id
@@ -43,12 +48,12 @@ const toggleSubscription = asyncHandler( async(req, res)=> {
         if(!channel){
             throw new apiError(500, "deletion failed or toggle subscription failed")
         }
-    }
 
-    return res.status(200)
-    .json(
-        new apiResponce(200, channel, "subscription toggled succesfull")
-    )
+        return res.status(200)
+        .json(
+            new apiResponce(200, 'unsubscribed', "subscription toggled succesfull")
+        )
+    }
 })
 
 const getUserChannelSubscribers = asyncHandler( async(req, res)=> {

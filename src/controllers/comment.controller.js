@@ -19,6 +19,28 @@ const getVideoComments = asyncHandler( async(req, res)=> {
             }
         },
         {
+            $lookup : {
+                from : "users",
+                localField : "owner",
+                foreignField : "_id",
+                as : "owner"
+            }
+        },
+        {
+            $addFields: {
+                ownerUsername : { $arrayElemAt: ["$owner.username", 0] },
+                ownerAvatar : { $arrayElemAt: ["$owner.avatar", 0] }
+            }
+        },
+        {
+            $sort : {
+                createdAt : -1
+            }
+        },
+        // {
+        //     $skip : (page - 1) * limit
+        // },
+        {
             $limit : limit
         }
     ])
@@ -41,7 +63,7 @@ const addComment = asyncHandler( async(req, res)=> {
         throw new apiError(404, "all feilds is required")
     }
 
-    const comment = await Comment.create({
+    let comment = await Comment.create({
         content : content,
         video : videoId,
         owner: req.user?._id
