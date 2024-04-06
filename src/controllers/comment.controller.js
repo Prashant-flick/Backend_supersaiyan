@@ -6,7 +6,8 @@ import mongoose from 'mongoose'
 
 const getVideoComments = asyncHandler( async(req, res)=> { 
     const {videoId} = req.params;
-    const {limit = 10, page = 1} = req.query;
+    const {limit = 10} = req.query;
+    console.log(limit);
 
     if(!videoId){
         throw new apiError(404, "videoId is required");
@@ -16,8 +17,8 @@ const getVideoComments = asyncHandler( async(req, res)=> {
         {
             $match: {
                 video : new mongoose.Types.ObjectId(videoId)
-            }
-        },
+            },
+        }, 
         {
             $lookup : {
                 from : "users",
@@ -29,7 +30,12 @@ const getVideoComments = asyncHandler( async(req, res)=> {
         {
             $addFields: {
                 ownerUsername : { $arrayElemAt: ["$owner.username", 0] },
-                ownerAvatar : { $arrayElemAt: ["$owner.avatar", 0] }
+                ownerAvatar : { $arrayElemAt: ["$owner.avatar", 0] },
+            }
+        },
+        {
+            $project : {
+                owner : 0
             }
         },
         {
@@ -41,9 +47,11 @@ const getVideoComments = asyncHandler( async(req, res)=> {
         //     $skip : (page - 1) * limit
         // },
         {
-            $limit : limit
+            $limit : parseInt(limit)
         }
     ])
+
+    const totalComments = await Comment.countDocuments({ video : new mongoose.Types.ObjectId(videoId) })
 
     if(!comments){
         throw new apiError(404, "comments not found")
@@ -51,7 +59,7 @@ const getVideoComments = asyncHandler( async(req, res)=> {
 
     return res.status(200)
     .json(
-        new apiResponce(200, comments, "comments fetched successfully")
+        new apiResponce(200, {comments,totalComments}, "comments fetched successfully")
     )
 })
 

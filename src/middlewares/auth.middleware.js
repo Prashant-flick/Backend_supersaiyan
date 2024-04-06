@@ -37,7 +37,6 @@ const refreshAccessToken = async(incomingRefreshToken) => {
 export const verifyJWT = asyncHandler(async (req, res , next) => {
     try {
         let token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "");
-        console.log('here');
         
         if(!token){
             console.log("req", req.cookies);

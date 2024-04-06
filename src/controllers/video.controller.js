@@ -131,7 +131,6 @@ const updateVideo = asyncHandler(async (req, res) => {
         if(!newThumbnail){
             throw new apiError(401, "failed to upload on cloudinary")
         }
-        console.log(newThumbnail);
         newThumbnail = newThumbnail.url;
 
         let tempvideo = await Video.findById(videoId)

@@ -42,7 +42,6 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new apiError(409, "User already exists");
     }
 
-    // console.log("req files", req.files);
     const avatarLocalPath = req.files?.avatar[0]?.path;
 
     const coverImageLocalPath = req.files?.coverImage[0]?.path;
@@ -113,7 +112,6 @@ const loginUser = asyncHandler(async (req, res) => {
         "-password -refreshToken"
     )
 
-    console.log("logged in user: ", loggedInUser);
 
     const options = {
         httpOnly: true,
@@ -173,8 +171,6 @@ const logoutUser = asyncHandler(async (req, res) => {
 })
 
 const refreshAccessToken = asyncHandler(async (req,res) => {
-    console.log('here refreshTOken');
-    console.log(req);
     const incomingRefreshToken = req.cookies?.refreshToken || req.body.refreshToken;
 
     if(!incomingRefreshToken){
@@ -182,8 +178,6 @@ const refreshAccessToken = asyncHandler(async (req,res) => {
     }
 
     try {
-        console.log('here');
-
         const decodeToken = jwt.verify(incomingRefreshToken, conf.refreshTokenSecret);
          
         const user = await User.findById(decodeToken?._id)
@@ -225,7 +219,6 @@ const refreshAccessToken = asyncHandler(async (req,res) => {
 const changeCurrentPassword = asyncHandler(async (req, res) => {
 
     const {oldPassword, newPassword} = req.body;
-    console.log(oldPassword, newPassword);
 
     const user = await User.findById(req.user?._id);
 
@@ -314,11 +307,6 @@ const updateAccountDetails = asyncHandler( async(req, res) => {
 })
 
 const updateAvatarDetails = asyncHandler( async(req, res) => {
-    // console.log(req.file);
-    // if(!req.user){
-    //     throw new apiError(401, "user not logged in" );
-    // }
-
     const avatarLocalPath = req.file?.path;
 
     if(!avatarLocalPath){
@@ -336,7 +324,6 @@ const updateAvatarDetails = asyncHandler( async(req, res) => {
     oldavatar = oldavatar.split('/');
     oldavatar = oldavatar[7];
     oldavatar = oldavatar.split('.')[0]
-    // console.log("here2", oldavatar);
 
     deleteFromCloudinary(oldavatar);
 
@@ -476,7 +463,6 @@ const getUserChannelProfile = asyncHandler( async(req, res) => {
         }
     ])
 
-    console.log(channel);
 
     if(!channel || channel.length<1){
         throw new apiError(404, "Channel does not exist");
@@ -531,7 +517,6 @@ const getwatchHistory = asyncHandler( async(req, res) => {
         }
     ])
 
-    // console.log(user);
 
     res.status(200)
     .json(
