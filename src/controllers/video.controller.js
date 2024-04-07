@@ -172,18 +172,58 @@ const getAVideobyId = asyncHandler( async (req, res) => {
         throw new apiError(404, "videoId is required")
     }
 
-    const video = await Video.findById(videoId)
+    const videos = await Video.findById(videoId);
+    
+    if(!videos){
+        throw new apiError(404, "video not found")
+    }
+    videos.views = videos.views + 1;
+    await videos.save({validateBeforeSave: false});
+
+    const video = await Video.aggregate([
+        {
+            $match: {
+                _id : new mongoose.Types.ObjectId(videoId)
+            }
+        },
+        {
+            $lookup: {
+                from: "likes",
+                localField: "_id",
+                foreignField: "video",
+                as: "likes"
+            }
+        },
+        {
+            $addFields: {
+                likedbyme : {
+                    $cond : {
+                        if : {
+                            $in : [new mongoose.Types.ObjectId(req.user._id), "$likes.likedBy"]
+                        },
+                        then : true,
+                        else : false
+                    }
+                },
+                totallikes : {
+                    $size : "$likes"
+                }
+            }
+        },
+        {
+            $project: {
+                likes: 0
+            }
+        }
+    ])
 
     if(!video){
         throw new apiError(404, "video not found")
     }
 
-    video.views = video.views + 1;
-    await video.save({validateBeforeSave: false});
-
     return res.status(200)
     .json(
-        new apiResponce(200, video, "video fetched successfully")
+        new apiResponce(200, video[0], "video fetched successfully")
     )
 })
 

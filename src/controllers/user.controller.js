@@ -531,7 +531,7 @@ const getUserbyId = asyncHandler( async(req, res) => {
         throw new apiError(404, "userid is required")
     }
 
-    const user = await  User.findById(id).select("-password");
+    const user = await User.findById(id).select("-password");
     
     if(!user){
         throw new apiError(404, "user not found")
