@@ -80,18 +80,23 @@ const toggleCommentLike = asyncHandler(async(req, res)=>{
         if(!like){
             throw new apiError(404, "comment like creation failed")
         }
+
+        return res.status(200)
+        .json(
+            new apiResponce(200, 'like', "comment like toggled successfully")
+        )
     }else{
         like = await Like.findByIdAndDelete(like[0]._id)
 
         if(!like){
             throw new apiError(404, "comment like deletion failed")
         }
-    }
 
-    return res.status(200)
-    .json(
-        new apiResponce(200, like, "comment like toggled successfully")
-    )
+        return res.status(200)
+        .json(
+            new apiResponce(200, 'dislike', "comment like toggled successfully")
+        )
+    }
 })
 
 const toggleTweetLike = asyncHandler(async(req, res)=>{

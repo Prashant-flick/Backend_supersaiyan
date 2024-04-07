@@ -3,6 +3,7 @@ import {asyncHandler} from '../utils/asyncHandler.js'
 import {apiError} from '../utils/apiError.js'
 import {apiResponce} from '../utils/apiResponce.js'
 import mongoose from 'mongoose'
+import commentSlice from '../../../gokutube_frontend/src/store/commentSlice.js'
 
 const getVideoComments = asyncHandler( async(req, res)=> { 
     const {videoId} = req.params;
@@ -27,14 +28,31 @@ const getVideoComments = asyncHandler( async(req, res)=> {
             }
         },
         {
-            $addFields: {
-                ownerUsername : { $arrayElemAt: ["$owner.username", 0] },
-                ownerAvatar : { $arrayElemAt: ["$owner.avatar", 0] },
+            $lookup : {
+                from : "likes",
+                localField : "_id",
+                foreignField : "comment",
+                as : "commentLikes"
             }
         },
         {
+            $addFields: {
+                ownerUsername : { $arrayElemAt: ["$owner.username", 0] },
+                ownerAvatar : { $arrayElemAt: ["$owner.avatar", 0] },
+                Likes : { $size : "$commentLikes"},
+                likedbyme : { 
+                    $cond: {  
+                        if: {$in : [new mongoose.Types.ObjectId(req.user?._id), "$commentLikes.likedBy"]},
+                        then: true,
+                        else: false
+                    }
+                }
+            }   
+        },
+        {
             $project : {
-                owner : 0
+                owner : 0,
+                commentLikes: 0,
             }
         },
         {
@@ -49,6 +67,7 @@ const getVideoComments = asyncHandler( async(req, res)=> {
             $limit : parseInt(limit)
         }
     ])
+
 
     const totalComments = await Comment.countDocuments({ video : new mongoose.Types.ObjectId(videoId) })
 
