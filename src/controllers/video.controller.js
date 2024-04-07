@@ -6,7 +6,7 @@ import { apiResponce } from "../utils/apiResponce.js";
 import mongoose from 'mongoose'
 
 const getAllVideos = asyncHandler(async (req, res) => {
-    const { page = 1, limit = 10, query, sortBy, userId } = req.query
+    const { limit = 9, query, sortBy, userId } = req.query
 
     const videos = await Video.aggregate([
         {
@@ -23,14 +23,15 @@ const getAllVideos = asyncHandler(async (req, res) => {
             $sort: sortBy ? { title : parseInt(sortBy) } : { _id : -1}
         },
         {
-            $limit: limit
+            $limit: parseInt(limit)
         }
     ])
 
+    const length = await Video.countDocuments()
 
     return res.status(200)
     .json(
-        new apiResponce(200, videos, "videos filtered successfull")
+        new apiResponce(200, {videos,length}, "videos filtered successfull")
     )
 })
 
