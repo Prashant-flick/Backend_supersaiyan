@@ -12,9 +12,9 @@ import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
 const router = Router();
-router.use(verifyJWT)
 
 router.route("/publish-video").post(
+    verifyJWT,
     upload.fields([
         {
             name: 'videoFile',
@@ -27,10 +27,10 @@ router.route("/publish-video").post(
     ]),
     publishAVideo
 )
-router.route("/delete-video/:videoId").delete(deleteVideo);
-router.route("/update-video-details/:videoId").post(upload.single("thumbnail") ,updateVideo);
-router.route("/get-video/:videoId").get(getAVideobyId)
-router.route("/toggle-publish-status/:videoId").post(togglePublishStatus)
+router.route("/delete-video/:videoId").delete(verifyJWT,deleteVideo);
+router.route("/update-video-details/:videoId").post(verifyJWT,upload.single("thumbnail") ,updateVideo);
+router.route("/get-video/:videoId").get(verifyJWT,getAVideobyId)
+router.route("/toggle-publish-status/:videoId").post(verifyJWT,togglePublishStatus)
 
 //get all-videos special
 router.route("/get-all-videos").get(getAllVideos)

@@ -20,6 +20,19 @@ const getAllVideos = asyncHandler(async (req, res) => {
             }
         },
         {
+            $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "user"
+            }
+        },
+        {
+            $addFields: {
+                owneravatar: "$user.avatar"
+            }
+        },
+        {
             $sort: sortBy ? { title : parseInt(sortBy) } : { _id : -1}
         },
         {
@@ -84,12 +97,14 @@ const publishAVideo = asyncHandler(async (req, res) => {
 
 const deleteVideo = asyncHandler(async (req, res) => {
     const {videoId} = req.params;
+    console.log(videoId);
 
     if(!videoId){
         throw new apiError(400, 'video id is required')
     }
 
     const video = await Video.findByIdAndDelete(videoId)
+    console.log(video);
 
     if(!video){
         throw new apiError(404, "video not found")

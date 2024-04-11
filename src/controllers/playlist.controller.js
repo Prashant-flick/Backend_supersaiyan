@@ -65,12 +65,32 @@ const getUserPlaylists = asyncHandler( async(req, res)=> {
             $match: {
                 owner: new mongoose.Types.ObjectId(userId)
             }
+        },
+        {
+            $addFields : {
+                firstVideo : { $arrayElemAt: ["$videos", 0] },
+            }  
+        },
+        {
+            $lookup: {
+                from: "videos",
+                localField: "firstVideo",
+                foreignField: "_id",
+                as: "firstVideo"
+            }
+        },
+        {
+            $addFields: {
+                Thumbnail: "$firstVideo.thumbnail",
+            }
+        },
+        {
+            $project: {
+                firstVideo: 0
+            }
         }
     ])
 
-    // if(!playlist || playlist.length === 0){
-    //     throw new apiError(404, "playlist not found create a playlist first")
-    // }
 
     return res.status(200)
     .json(
