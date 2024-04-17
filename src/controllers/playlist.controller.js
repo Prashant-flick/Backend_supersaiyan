@@ -1,4 +1,4 @@
-import {asyncHandler} from '../utils/asynchandler.js';
+import {asyncHandler} from '../utils/asyncHandler.js';
 import {apiError} from '../utils/apiError.js';
 import {apiResponce} from '../utils/apiResponce.js';
 import {Playlist} from '../models/playlist.model.js';
@@ -41,6 +41,27 @@ const addVideosToPlaylist = asyncHandler( async(req, res)=> {
 
     if(!playlist){
         throw new apiError(404, "playlist not found");
+    }
+
+    const videodata = await Playlist.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(playlistId)
+            }
+        },
+        {
+            $match: {
+                videos: new mongoose.Types.ObjectId(videoId)
+            }
+        }
+    ])
+
+
+    if(videodata.length>0){
+        return res.status(201)
+        .json(
+            new apiResponce(200, [], "Video already exists")
+        )
     }
 
     playlist.videos.push(videoId)

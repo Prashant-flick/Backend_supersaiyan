@@ -1,6 +1,7 @@
 import {asyncHandler} from "../utils/asyncHandler.js";
 import {apiError} from "../utils/apiError.js"
 import {User} from "../models/user.model.js";
+import {Playlist} from '../models/playlist.model.js';
 import { deleteFromCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js";
 import { apiResponce } from "../utils/apiResponce.js";
 import mongoose from "mongoose";
@@ -58,6 +59,13 @@ const registerUser = asyncHandler(async (req, res) => {
     if(!createdUser){
         throw new apiError(500, "User not created");
     }
+
+    const playlist = await Playlist.create({
+        name: 'WatchLater',
+        description: 'WatchLater playlist',
+        videos: [],
+        owner: user?._id
+    })
 
     return res.status(201).json(
         new apiResponce(
