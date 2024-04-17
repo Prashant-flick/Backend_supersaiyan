@@ -42,28 +42,13 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new apiError(409, "User already exists");
     }
 
-    const avatarLocalPath = req.files?.avatar[0]?.path;
-
-    const coverImageLocalPath = req.files?.coverImage[0]?.path;
-
-    if(!avatarLocalPath){
-        throw new apiError(400, "Avatar file is required");
-    }
-
-    const avatar = await uploadOnCloudinary(avatarLocalPath);
-    const coverImage = await uploadOnCloudinary(coverImageLocalPath);
-
-    if(!avatar){
-        throw new apiError(400, "Avatar file is required");
-    }
-
     const user = await User.create({
         fullName,
         email,
         username: username.toLowerCase(),
         password,
-        avatar: avatar.url,
-        coverImage: coverImage?.url || "",
+        avatar: 'https://res.cloudinary.com/dbmlz6pip/image/upload/v1713336824/yvcn1vbdpxg5ftjxfveb.jpg',
+        coverImage: "",
     })
 
     const createdUser = await User.findById(user._id).select(
