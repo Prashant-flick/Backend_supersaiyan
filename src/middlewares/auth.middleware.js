@@ -38,6 +38,7 @@ export const verifyJWT = asyncHandler(async (req, res , next) => {
     try {
         let token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "");
         
+        // console.log(token);
         if(!token){
             console.log("req", req.cookies);
             const data = await refreshAccessToken(req.cookies?.refreshToken);
@@ -55,8 +56,12 @@ export const verifyJWT = asyncHandler(async (req, res , next) => {
             
             token = data.accessToken;
         }
+
+        // console.log('here');
         
         const decodedToken = jwt.verify(token, conf.accessTokenSecret);
+
+        // console.log(decodedToken);
     
         const user = await User.findById(decodedToken._id).select("-password -refreshToken")
 
