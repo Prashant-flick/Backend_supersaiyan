@@ -6,6 +6,7 @@ import {
     publishAVideo,
     togglePublishStatus,
     updateVideo,
+    getAllSubscriptionVideos
 } 
 from "../controllers/video.controller.js"
 import { upload } from "../middlewares/multer.middleware.js";
@@ -31,6 +32,7 @@ router.route("/delete-video/:videoId").delete(verifyJWT,deleteVideo);
 router.route("/update-video-details/:videoId").post(verifyJWT,upload.single("thumbnail") ,updateVideo);
 router.route("/get-video/:videoId").get(verifyJWT,getAVideobyId)
 router.route("/toggle-publish-status/:videoId").post(verifyJWT,togglePublishStatus)
+router.route("/get-all-subscription-videos").post(verifyJWT,getAllSubscriptionVideos)
 
 //get all-videos special
 router.route("/get-all-videos").get(getAllVideos)

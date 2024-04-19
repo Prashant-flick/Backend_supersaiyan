@@ -1,6 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { apiError } from "../utils/apiError.js";
 import { Video } from "../models/video.model.js";
+import { User } from '../models/user.model.js'
 import { deleteFromCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js";
 import { apiResponce } from "../utils/apiResponce.js";
 import mongoose from 'mongoose'
@@ -17,6 +18,47 @@ const getAllVideos = asyncHandler(async (req, res) => {
                     query ? { description: query } : {description: ""},
                     !userId && !query ? {} : {owner: ""}
                 ] 
+            }
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "user"
+            }
+        },
+        {
+            $addFields: {
+                owneravatar: "$user.avatar"
+            }
+        },
+        {
+            $sort: sortBy ? { title : parseInt(sortBy) } : { _id : -1}
+        },
+        {
+            $limit: parseInt(limit)
+        }
+    ])
+
+    const length = await Video.countDocuments()
+
+    return res.status(200)
+    .json(
+        new apiResponce(200, {videos,length}, "videos filtered successfull")
+    )
+})
+
+const getAllSubscriptionVideos = asyncHandler(async (req, res) => {
+    const { limit = 9, sortBy } = req.query
+    const { allsubscribedId } = req.body
+
+    const subscribersIds = allsubscribedId.map(id => id= new mongoose.Types.ObjectId(id.channel));
+
+    const videos = await Video.aggregate([
+        {
+            $match: {
+                owner: { $in: subscribersIds }  
             }
         },
         {
@@ -182,6 +224,7 @@ const updateVideo = asyncHandler(async (req, res) => {
 
 const getAVideobyId = asyncHandler( async (req, res) => {
     const {videoId} = req.params;
+    const {isplaying} = req.query
 
     if(!videoId){
         throw new apiError(404, "videoId is required")
@@ -192,8 +235,10 @@ const getAVideobyId = asyncHandler( async (req, res) => {
     if(!videos){
         throw new apiError(404, "video not found")
     }
-    videos.views = videos.views + 1;
-    await videos.save({validateBeforeSave: false});
+    if(isplaying=='true'){
+        videos.views = videos.views + 1;
+        await videos.save({validateBeforeSave: false});
+    }
 
     const video = await Video.aggregate([
         {
@@ -234,6 +279,14 @@ const getAVideobyId = asyncHandler( async (req, res) => {
 
     if(!video){
         throw new apiError(404, "video not found")
+    }
+
+    if(isplaying=='true' && JSON.stringify(req?.user?.watchHistory[0]) !== JSON.stringify(video[0]?._id)){
+        const data = await User.findById(req?.user?._id)
+        data.watchHistory = data.watchHistory.filter((id) => JSON.stringify(id)!==JSON.stringify(video[0]?._id))
+        data.watchHistory = [video[0]?._id, ...data.watchHistory]
+        await data.save({validateBeforeSave: false});
+        console.log(data);
     }
 
     return res.status(200)
@@ -283,5 +336,7 @@ export {
     deleteVideo,
     updateVideo,
     getAVideobyId,
-    togglePublishStatus
+    togglePublishStatus,
+    getAllSubscriptionVideos,
+    
 }

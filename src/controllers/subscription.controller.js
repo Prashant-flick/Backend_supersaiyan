@@ -58,6 +58,7 @@ const toggleSubscription = asyncHandler( async(req, res)=> {
 
 const getUserChannelSubscribers = asyncHandler( async(req, res)=> {
     const {channelId} = req.params;
+    const {limit=10} = req.query
 
     if(!channelId){
         throw new apiError(404, "channelId not found")
@@ -71,8 +72,12 @@ const getUserChannelSubscribers = asyncHandler( async(req, res)=> {
         },
         {
             $project: {
-                subscriber: 1
+                subscriber: 1,
+                _id:0
             }
+        },
+        {
+            $limit: parseInt(limit)
         }
     ])
 
@@ -90,6 +95,7 @@ const getUserChannelSubscribers = asyncHandler( async(req, res)=> {
 
 const getSubscribedChannels = asyncHandler( async(req, res) => {
     const {channelId} = req.params
+    const {limit=10} = req.query
 
     if(!channelId){
         throw new apiError(404, "channelId not found")
@@ -103,8 +109,12 @@ const getSubscribedChannels = asyncHandler( async(req, res) => {
         },
         {
             $project: {
-                channel: 1
+                channel: 1,
+                _id:0
             }
+        },
+        {
+            $limit: parseInt(limit)
         }
     ])
 

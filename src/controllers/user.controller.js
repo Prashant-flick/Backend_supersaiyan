@@ -277,22 +277,20 @@ const deleteCurrentUser = asyncHandler( async(req, res)=> {
 const updateAccountDetails = asyncHandler( async(req, res) => {
     const {email, fullName} = req.body
 
-    if(!email || !fullName){
+
+    if(!email && !fullName){
         throw new apiError(400, "All feild are required")
     }
 
-    const user = await User.findByIdAndUpdate(
-        req.user._id,
-        {
-            $set: {
-                email,
-                fullName
-            }
-        },
-        {
-            new: true
-        }
-    ).select("-password ")
+    let user = await User.findById(req.user?._id)
+    if(email){
+        user.email = email
+    }
+    if(fullName){
+        user.fullName = fullName
+    }
+
+    user = await user.save({validateBeforeSave: false})
 
     return res.status(200).json(
         new apiResponce(200, user, "account details updated succesfully")
@@ -349,6 +347,7 @@ const updateCoverImageDetails = asyncHandler( async(req, res) => {
     // }
 
     const coverImageLocalPath = req.file?.path;
+    console.log(coverImageLocalPath);
 
     if(!coverImageLocalPath){
         throw new apiError(400, "coverImage file is missing");
@@ -361,11 +360,12 @@ const updateCoverImageDetails = asyncHandler( async(req, res) => {
     }
 
     let oldcoverImage = req.user?.coverImage;
-    oldcoverImage = oldcoverImage.split('/');
-    oldcoverImage = oldcoverImage[7];
-    oldcoverImage = oldcoverImage.split('.')[0]
-
-    deleteFromCloudinary(oldcoverImage);
+    if(oldcoverImage){
+        oldcoverImage = oldcoverImage.split('/');
+        oldcoverImage = oldcoverImage[7];
+        oldcoverImage = oldcoverImage.split('.')[0]
+        deleteFromCloudinary(oldcoverImage);
+    }
 
     const user = await User.findByIdAndUpdate(
         req.user?._id,
