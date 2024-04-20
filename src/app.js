@@ -8,7 +8,8 @@ const app = express()
 
 app.use(cors({
     origin: conf.corsOrigin,
-    credentials: true
+    credentials: true,
+    withCredentials: true
 }))
 
 app.get("/", (req, res) => res.send("Express on localhost"));

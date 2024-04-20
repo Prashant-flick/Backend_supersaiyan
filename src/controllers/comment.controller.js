@@ -3,7 +3,6 @@ import {asyncHandler} from '../utils/asyncHandler.js'
 import {apiError} from '../utils/apiError.js'
 import {apiResponce} from '../utils/apiResponce.js'
 import mongoose from 'mongoose'
-import commentSlice from '../../../gokutube_frontend/src/store/commentSlice.js'
 
 const getVideoComments = asyncHandler( async(req, res)=> { 
     const {videoId} = req.params;
