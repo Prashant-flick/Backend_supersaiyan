@@ -49,7 +49,7 @@ const registerUser = asyncHandler(async (req, res) => {
         email,
         username: username.toLowerCase(),
         password,
-        avatar: 'https://res.cloudinary.com/dbmlz6pip/image/upload/v1713336824/yvcn1vbdpxg5ftjxfveb.jpg',
+        avatar: 'https://res.cloudinary.com/dbmlz6pip/image/upload/v1722345677/user-profile-icon-in-flat-style-member-avatar-illustration-on-isolated-background-human-permission-sign-business-concept-vector_huygcr.jpg',
         coverImage: "",
     })
 
@@ -61,7 +61,7 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new apiError(500, "User not created");
     }
 
-    const playlist = await Playlist.create({
+    await Playlist.create({
         name: 'WatchLater',
         description: 'WatchLater playlist',
         videos: [],
