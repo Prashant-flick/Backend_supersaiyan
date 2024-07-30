@@ -7,18 +7,22 @@ import bodyParser from 'body-parser'
 const app = express()
 
 app.use(cors({
-    origin: ['https://gokutube-frontend.vercel.app',conf.corsOrigin],
+    origin: String(conf.corsOrigin),
     credentials: true,
-    withCredentials: true
+    withCredentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    exposedHeaders: ['Content-Range', 'X-Content-Range']
 }))
+
 
 app.get("/", (req, res) => res.send("Express on localhost"));
 
-app.use(express.json({limit: '16kb'}))
-app.use(express.urlencoded({extended: true, limit: '30kb'}))
+app.use(bodyParser.json({limit: '50mb'}));
+app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
+app.use(express.json({limit: '50mb'}))
+app.use(express.urlencoded({extended: true, limit: '50mb'}))
 app.use(express.static('public'))
 app.use(cookieParser())
-app.use(bodyParser.urlencoded({ extended: true }));
 
 
 //router import 
@@ -29,6 +33,7 @@ import commentRouter from './routes/comment.router.js'
 import playlistRouter from './routes/playlist.router.js'
 import tweetRouter from './routes/tweet.router.js'
 import likeRouter from './routes/like.router.js'
+import cloudinaryRouter from './routes/cloudinary.router.js'
 
 //routes delecration
 app.use("/api/v1/users", userRouter);
@@ -38,5 +43,6 @@ app.use("/api/v1/comment", commentRouter);
 app.use("/api/v1/playlist", playlistRouter);
 app.use("/api/v1/tweet", tweetRouter);
 app.use("/api/v1/like", likeRouter);
+app.use("/api/v1/cloudinary", cloudinaryRouter);
 
 export {app}

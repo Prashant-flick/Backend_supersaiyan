@@ -8,39 +8,57 @@ import { generateAccessAndRefreshToken } from "../controllers/user.controller.js
 const refreshAccessToken = async(incomingRefreshToken) => {
     if(!incomingRefreshToken){
         throw console.error("refresh token is required" , 401);
-    }
+    }else{
+        try {
+            const decodeToken = jwt.verify(incomingRefreshToken, conf.refreshTokenSecret);
+            const expirationTime = decodeToken?.exp * 1000; // Convert to milliseconds
 
-    try {
-        const decodeToken = jwt.verify(incomingRefreshToken, conf.refreshTokenSecret);
+        // Get the current time
+            const currentTime = Date.now()
 
-        const user = await User.findById(decodeToken?._id)
+            if(currentTime>=expirationTime){
+                throw console.error("refresh token expired" , 401);
+            }else{
+                const user = await User.findById(decodeToken?._id)
+            
+                if(!user){
+                    throw console.error("user not found" , 401)
+                }
+            
+                if(incomingRefreshToken !== user?.refreshToken){
+                    throw console.error("invalid refresh token" , 401);
+                }
+            
+                const {accessToken, refreshToken}= await generateAccessAndRefreshToken(user?._id);
+            
+                return {
+                    accessToken,
+                    refreshToken
+                }
+            }
     
-        if(!user){
-            throw console.error("user not founf" , 401)
-        }
-    
-        if(incomingRefreshToken !== user.refreshToken){
+            
+        } catch (error) {
             throw console.error("invalid refresh token" , 401);
         }
-    
-        const {accessToken, refreshToken} = await generateAccessAndRefreshToken(user._id);
-    
-        return {
-            accessToken,
-            refreshToken
-        }
-    } catch (error) {
-        throw console.error("refresh token is required" , 401);
     }
+
+    
 }
 
 export const verifyJWT = asyncHandler(async (req, res , next) => {
     try {
         let token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "");
+
+        const decodeToken = jwt.decode(token);
+
+        // Extract the expiration time from the decoded token
+        const expirationTime = decodeToken?.exp * 1000; // Convert to milliseconds
+
+        // Get the current time
+        const currentTime = Date.now()
         
-        // console.log(token);
-        if(!token){
-            console.log("req", req.cookies);
+        if(!token || currentTime>=expirationTime){
             const data = await refreshAccessToken(req.cookies?.refreshToken);
             if(data.status === 401){
                 throw new apiError(401, "unauthorized access");
@@ -52,17 +70,13 @@ export const verifyJWT = asyncHandler(async (req, res , next) => {
                 sameSite: "None",
             }
 
-            res.cookie("accessToken", data.accessToken, options)
-            .cookie("refreshToken", data.refreshToken, options)
+            res.cookie("accessToken", data?.accessToken, options)
+            .cookie("refreshToken", data?.refreshToken, options)
             
-            token = data.accessToken;
-        }
-
-        // console.log('here');
-        
+            token = data?.accessToken;
+        }        
         const decodedToken = jwt.verify(token, conf.accessTokenSecret);
 
-        // console.log(decodedToken);
     
         const user = await User.findById(decodedToken._id).select("-password -refreshToken")
 

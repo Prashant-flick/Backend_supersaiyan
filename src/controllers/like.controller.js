@@ -11,7 +11,6 @@ const toggleVideoLike = asyncHandler(async(req, res)=>{
         throw new apiError(404, "videoId is required")
     }
 
-    console.log(req.user._id);
 
     let like = await Like.aggregate([
         {
@@ -24,7 +23,6 @@ const toggleVideoLike = asyncHandler(async(req, res)=>{
         }
     ])
 
-    console.log(like);
 
     if(!like[0]){
         like = await Like.create({

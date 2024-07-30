@@ -18,6 +18,7 @@ const generateAccessAndRefreshToken = async(userId) => {
         await user.save({validateBeforeSave: false});
         
         return {accessToken, refreshToken};
+       
     } catch (error) {
         throw new apiError(500, "error while generating access and refresh tokens");
     }
@@ -99,7 +100,7 @@ const loginUser = asyncHandler(async (req, res) => {
         throw new apiError(401, "invalid user credentials");
     }
 
-    const {accessToken, refreshToken} = await generateAccessAndRefreshToken(user._id);
+    const {accessToken, refreshToken} = await generateAccessAndRefreshToken(user?._id);
 
     const loggedInUser = await User.findById(user._id).select(
         "-password -refreshToken"
@@ -188,6 +189,7 @@ const refreshAccessToken = asyncHandler(async (req,res) => {
         const options = {
             httponly: true,
             secure: true,
+            sameSite: 'None'
         }
     
         const {accessToken, newrefreshToken} = await generateAccessAndRefreshToken(user._id);
@@ -300,31 +302,31 @@ const updateAccountDetails = asyncHandler( async(req, res) => {
 })
 
 const updateAvatarDetails = asyncHandler( async(req, res) => {
-    const avatarLocalPath = req.file?.path;
+    const avatarUrl = req.body?.avatar;
 
-    if(!avatarLocalPath){
+    if(!avatarUrl){
         throw new apiError(400, "avatar file is missing");
-    }
-
-    const avatar = await uploadOnCloudinary(avatarLocalPath);
-
-    if(!avatar.url){
-        throw new apiError(500, 'server error while uploading image');
     }
 
     // getting cloudinary avatar file name
     let oldavatar = req.user?.avatar;
-    oldavatar = oldavatar.split('/');
-    oldavatar = oldavatar[7];
-    oldavatar = oldavatar.split('.')[0]
+    if(oldavatar){
+        oldavatar = oldavatar.split('/');
+        if(oldavatar[7]=='images'){
+            oldavatar = `images/${oldavatar[8]}`
+        }else{
+            oldavatar = oldavatar[7];
+        }
+        oldavatar = oldavatar.split('.')[0]
 
-    deleteFromCloudinary(oldavatar);
+        deleteFromCloudinary(oldavatar, "image");
+    }
 
     const user = await User.findByIdAndUpdate(
         req.user?._id,
         {
             $set :{
-                avatar: avatar.url
+                avatar: avatarUrl
             }
         },
         {
@@ -344,36 +346,29 @@ const updateAvatarDetails = asyncHandler( async(req, res) => {
 })
 
 const updateCoverImageDetails = asyncHandler( async(req, res) => {
-    // if(!req.user){
-    //     throw new apiError(401, "user not logged in" );
-    // }
+    const coverImageUrl = req.body?.coverImage;
 
-    const coverImageLocalPath = req.file?.path;
-    console.log(coverImageLocalPath);
-
-    if(!coverImageLocalPath){
-        throw new apiError(400, "coverImage file is missing");
-    }
-
-    const coverImage = await uploadOnCloudinary(coverImageLocalPath);
-
-    if(!coverImage.url){
-        throw new apiError(500, 'server error while uploading image');
+    if(!coverImageUrl){
+        throw new apiError(400, "coverImageUrl is missing");
     }
 
     let oldcoverImage = req.user?.coverImage;
     if(oldcoverImage){
         oldcoverImage = oldcoverImage.split('/');
-        oldcoverImage = oldcoverImage[7];
+        if(oldcoverImage[7]=='images'){
+            oldcoverImage = `images/${oldcoverImage[8]}`
+        }else{
+            oldcoverImage = oldcoverImage[7];
+        }
         oldcoverImage = oldcoverImage.split('.')[0]
-        deleteFromCloudinary(oldcoverImage);
+        deleteFromCloudinary(oldcoverImage, "image");
     }
 
     const user = await User.findByIdAndUpdate(
         req.user?._id,
         {
             $set :{
-                coverImage: coverImage.url
+                coverImage: coverImageUrl
             }
         },
         {

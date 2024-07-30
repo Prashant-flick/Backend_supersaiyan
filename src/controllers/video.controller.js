@@ -91,32 +91,18 @@ const getAllSubscriptionVideos = asyncHandler(async (req, res) => {
 })
 
 const publishAVideo = asyncHandler(async (req, res) => {
-    const {title , description} = req.body;
+    const {title , description, videoFile, thumbnail} = req.body;
 
-    if(!title || !description){
-        throw new apiError(404, "title and description are required")
-    }
-
-    const videoFileLocalPath = req.files?.videoFile[0]?.path;
-    const thumbnailLocalPath = req.files?.thumbnail[0]?.path;
-
-    if(!videoFileLocalPath || !thumbnailLocalPath){
-        throw new apiError(404, "video and thumbnail are required")
-    }
-
-    const videoFile = await uploadOnCloudinary(videoFileLocalPath);
-    const thumbnail = await uploadOnCloudinary(thumbnailLocalPath);
-
-    if(!videoFile || !thumbnail){
-        throw new apiError(404, "failed to upload on cloudinary")
+    if(!title || !description || !videoFile || !thumbnail){
+        throw new apiError(404, "all feilds are required")
     }
 
     const video = await Video.create(
         {
             title,
             description,
-            videoFile: videoFile.url,
-            thumbnail: thumbnail.url,
+            videoFile: videoFile,
+            thumbnail: thumbnail,
             owner: req.user._id
         },
     )
@@ -139,25 +125,32 @@ const publishAVideo = asyncHandler(async (req, res) => {
 
 const deleteVideo = asyncHandler(async (req, res) => {
     const {videoId} = req.params;
-    console.log(videoId);
 
     if(!videoId){
         throw new apiError(400, 'video id is required')
     }
 
     const video = await Video.findByIdAndDelete(videoId)
-    console.log(video);
 
     if(!video){
         throw new apiError(404, "video not found")
     }
 
+
     let oldthumbnail = video?.thumbnail;
-    oldthumbnail = oldthumbnail.split('/')[7];
+    if(oldthumbnail[7]==='images'){
+        oldthumbnail = `images/${oldcoverImage[8]}`
+    }else{
+        oldthumbnail = oldthumbnail[7];
+    }
     oldthumbnail = oldthumbnail.split('.')[0]
 
     let oldvideo = video?.videoFile;
-    oldvideo = oldvideo.split('/')[7];
+    if(oldvideo[7]==='videos'){
+        oldvideo = `videos/${oldvideo[8]}`
+    }else{
+        oldvideo = oldvideo[7];
+    }
     oldvideo = oldvideo.split('.')[0];
 
     deleteFromCloudinary(oldthumbnail, "image");
@@ -286,7 +279,6 @@ const getAVideobyId = asyncHandler( async (req, res) => {
         data.watchHistory = data.watchHistory.filter((id) => JSON.stringify(id)!==JSON.stringify(video[0]?._id))
         data.watchHistory = [video[0]?._id, ...data.watchHistory]
         await data.save({validateBeforeSave: false});
-        console.log(data);
     }
 
     return res.status(200)

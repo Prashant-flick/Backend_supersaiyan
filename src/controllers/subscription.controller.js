@@ -11,7 +11,6 @@ const toggleSubscription = asyncHandler( async(req, res)=> {
         throw new apiError(404, "channelId is required")
     }
 
-    // console.log(req.user);
 
     let channel = await Subscription.aggregate([
         {
@@ -24,7 +23,6 @@ const toggleSubscription = asyncHandler( async(req, res)=> {
         }
     ])
 
-    // console.log(channel);
 
     if(!channel || channel.length === 0){
         channel = await Subscription.create({

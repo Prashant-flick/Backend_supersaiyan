@@ -16,16 +16,6 @@ const router = Router();
 
 router.route("/publish-video").post(
     verifyJWT,
-    upload.fields([
-        {
-            name: 'videoFile',
-            maxCount: 1
-        },
-        {
-            name: 'thumbnail',
-            maxCount: 1
-        },
-    ]),
     publishAVideo
 )
 router.route("/delete-video/:videoId").delete(verifyJWT,deleteVideo);
